@@ -78,7 +78,6 @@ class _HomeScreenState extends State<HomeScreen> {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemBuilder: (context, index) {
-
                   // getting todo list
                   final todo = _todoList[index];
 
@@ -96,14 +95,32 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
 
                       // Checkbox to show completed
-                      trailing: Checkbox(
-                        value: todo["status"],
-                        onChanged: (value) {
-                          if (value != null) {
-                            _todoList[index]["status"] = value;
-                            setState(() {});
-                          }
-                        },
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Checkbox(
+                            value: todo["status"],
+                            onChanged: (value) {
+                              if (value != null) {
+                                // change the status of clicked item
+                                _todoList[index]["status"] = value;
+                                setState(() {});
+                              }
+                            },
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              // Remove deleted item from the list
+                              _todoList.removeAt(index);
+                              setState(() {
+                                
+                              });
+                            },
+                            style: IconButton.styleFrom(
+                                foregroundColor: Colors.red),
+                            icon: const Icon(Icons.delete),
+                          ),
+                        ],
                       ),
                     ),
                   );
