@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:todo_app/main.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -11,10 +14,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _taskController = TextEditingController();
   final FocusNode _taskFocusNode = FocusNode();
 
-  final List<Map<String, dynamic>> _todoList = [];
-
   @override
   Widget build(BuildContext context) {
+    hiveBox.values.toList();
     return Scaffold(
       appBar: AppBar(
         title: const Text("TO DO APP"),
@@ -47,12 +49,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     // Save button
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         final task = {
                           "task": _taskController.text.trim(),
                           "status": false
                         };
-                        _todoList.add(task);
+                        hiveBox.add(task);
+
                         _taskFocusNode.unfocus();
                         _taskController.clear();
 
@@ -72,67 +75,71 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 32,
             ),
 
-            // Listview
-            Expanded(
-              // Expanded given to fill available space, to scroll  and to solve overflow issue.
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemBuilder: (context, index) {
-                  // getting todo list
-                  final todo = _todoList[index];
+            ValueListenableBuilder(
+                valueListenable: hiveBox.listenable(),
+                builder: (context, box, child) {
+                  final todoList = box.values.toList();
 
-                  // list card
-                  return Card(
-                    color: todo["status"] ? Colors.blue : null,
-                    child: ListTile(
-                      title: Text(
-                        todo["task"],
-                        style: TextStyle(
-                          decoration: todo["status"]
-                              ? TextDecoration.lineThrough
-                              : TextDecoration.none,
-                        ),
-                      ),
+                  // Listview
+                  return Expanded(
+                    // Expanded given to fill available space, to scroll  and to solve overflow issue.
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemBuilder: (context, index) {
+                        // getting todo list
+                        final todo = todoList[index];
 
-                      // Checkbox to show completed
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Checkbox(
-                            value: todo["status"],
-                            onChanged: (value) {
-                              if (value != null) {
-                                // change the status of clicked item
-                                _todoList[index]["status"] = value;
-                                setState(() {});
-                              }
-                            },
+                        // list card
+                        return Card(
+                          color: todo["status"] ? Colors.blue : null,
+                          child: ListTile(
+                            title: Text(
+                              todo["task"],
+                              style: TextStyle(
+                                decoration: todo["status"]
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
+                              ),
+                            ),
+
+                            // Checkbox to show completed
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Checkbox(
+                                  value: todo["status"],
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      // change the status of clicked item
+                                      todoList[index]["status"] = value;
+                                      setState(() {});
+                                    }
+                                  },
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    // Remove deleted item from the list
+                                    todoList.removeAt(index);
+                                    setState(() {});
+                                  },
+                                  style: IconButton.styleFrom(
+                                      foregroundColor: Colors.red),
+                                  icon: const Icon(Icons.delete),
+                                ),
+                              ],
+                            ),
                           ),
-                          IconButton(
-                            onPressed: () {
-                              // Remove deleted item from the list
-                              _todoList.removeAt(index);
-                              setState(() {
-                                
-                              });
-                            },
-                            style: IconButton.styleFrom(
-                                foregroundColor: Colors.red),
-                            icon: const Icon(Icons.delete),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
+                      separatorBuilder: (context, index) {
+                        return const SizedBox(
+                          height: 16,
+                        );
+                      },
+                      itemCount: todoList.length,
                     ),
                   );
-                },
-                separatorBuilder: (context, index) {
-                  return const SizedBox(
-                    height: 16,
-                  );
-                },
-                itemCount: _todoList.length,
-              ),
-            ),
+                }),
           ],
         ),
       ),
